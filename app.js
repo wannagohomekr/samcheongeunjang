@@ -4829,7 +4829,7 @@ async function handleLogin() {
         loginUsername.focus();
         return;
     }
-    if (username !== '서신근장관리자') {
+    if (username !== '근장관리자') {
         alert('존재하지 않는 아이디이거나 관리자 계정이 아닙니다.');
         loginUsername.select();
         return;
