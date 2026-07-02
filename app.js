@@ -1,7 +1,7 @@
 // Supabase Configuration
 // 복사해오신 Supabase URL과 Public Anon Key를 여기에 입력해 주세요.
-const SUPABASE_URL = "https://syecvaccoztxbnjwpkfy.supabase.co"; 
-const SUPABASE_ANON_KEY = "sb_publishable_FUk1z0sLlATIus7KHXnYgA_3G4ku9N9"; 
+const SUPABASE_URL = "https://hcplbxcopsuvptlamasi.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_ZU61y-0Zzd5OO0a0-ccPXQ_GkZ-p8sL"; 
 
 let supabaseClient = null;
 if (SUPABASE_URL && SUPABASE_ANON_KEY) {
@@ -399,7 +399,7 @@ const BACKUP_DEFAULT_DATA = {
         },
         {
             "id": "s13",
-            "name": "윤철헌",
+            "name": "윤철현",
             "type": "학기중",
             "colorIndex": 5,
             "schedules": [
@@ -519,7 +519,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -570,7 +570,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -659,7 +659,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 15,
                 "endHour": 18,
@@ -738,7 +738,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -824,7 +824,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -910,7 +910,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -975,7 +975,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1071,7 +1071,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": true
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 15,
                 "endHour": 18,
@@ -1150,7 +1150,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1236,7 +1236,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1322,7 +1322,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1380,7 +1380,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1448,7 +1448,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": true
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 15,
                 "endHour": 18,
@@ -1534,7 +1534,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1620,7 +1620,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1706,7 +1706,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1764,7 +1764,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -1853,7 +1853,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": true
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 15,
                 "endHour": 18,
@@ -1939,7 +1939,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -2032,7 +2032,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -2118,7 +2118,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -2183,7 +2183,7 @@ const BACKUP_DEFAULT_DATA = {
                 "hasMeal": false
             },
             {
-                "studentName": "윤철헌",
+                "studentName": "윤철현",
                 "type": "학기중",
                 "startHour": 17,
                 "endHour": 22,
@@ -2280,16 +2280,24 @@ const newPassword = document.getElementById('new-password');
 const newPasswordConfirm = document.getElementById('new-password-confirm');
 
 // Load data (Try server first, then fallback to LocalStorage)
-// Helper to check if Supabase is reachable under 1.2s timeout (prevents hang on secure networks)
+// Helper to check if Supabase is reachable under 2.0s timeout (prevents hang on secure networks)
 async function isSupabaseReachable() {
     if (!supabaseClient) return false;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1200);
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
     try {
-        // Fetch to Supabase base URL (GET with no-cors so it doesn't fail on CORS)
-        await fetch(SUPABASE_URL, { method: 'GET', mode: 'no-cors', signal: controller.signal });
+        // Fetch a tiny query from our table using the anon key to test actual access without causing 404
+        const pingUrl = `${SUPABASE_URL}/rest/v1/timetable_store?select=id&limit=1`;
+        const res = await fetch(pingUrl, { 
+            method: 'GET', 
+            headers: { 
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            signal: controller.signal 
+        });
         clearTimeout(timeoutId);
-        return true;
+        return res.ok;
     } catch (e) {
         clearTimeout(timeoutId);
         console.warn("Supabase is unreachable (secure network or offline):", e.message);
