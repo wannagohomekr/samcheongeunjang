@@ -12,6 +12,12 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
     }
 }
 
+// Dynamic LocalStorage Keys to prevent sharing cache between different subdirectory deployments
+const getStorageKey = (baseKey) => {
+    const path = window.location.pathname.replace(/\/$/, ""); // remove trailing slash
+    return `${baseKey}_${path}`;
+};
+
 // Global State
 let students = [];
 let exceptions = {}; // exceptions = { "YYYY-MM-DD": [ { studentName, type, startHour, endHour, hasMeal }, ... ] }
@@ -2367,14 +2373,14 @@ async function loadData() {
     }
     
     // Pure Local Storage Fallback
-    let saved = localStorage.getItem('work_study_students');
-    let savedExceptions = localStorage.getItem('work_study_exceptions');
+    let saved = localStorage.getItem(getStorageKey('work_study_students'));
+    let savedExceptions = localStorage.getItem(getStorageKey('work_study_exceptions'));
     
     // Automatically purge old mock data (like 홍길동) to force load the correct reconstructed dataset
     if (saved && saved.includes('홍길동')) {
-        localStorage.removeItem('work_study_students');
-        localStorage.removeItem('work_study_exceptions');
-        localStorage.removeItem('work_study_populated');
+        localStorage.removeItem(getStorageKey('work_study_students'));
+        localStorage.removeItem(getStorageKey('work_study_exceptions'));
+        localStorage.removeItem(getStorageKey('work_study_populated'));
         saved = null;
         savedExceptions = null;
         console.log("Purged legacy sample data.");
@@ -2457,8 +2463,8 @@ function parseInputTextSilent() {
 
 async function saveData() {
     // 1. Save to browser LocalStorage (always)
-    localStorage.setItem('work_study_students', JSON.stringify(students));
-    localStorage.setItem('work_study_exceptions', JSON.stringify(exceptions));
+    localStorage.setItem(getStorageKey('work_study_students'), JSON.stringify(students));
+    localStorage.setItem(getStorageKey('work_study_exceptions'), JSON.stringify(exceptions));
 
     // 2. Save to Supabase if connected
     if (supabaseClient) {
@@ -4278,8 +4284,8 @@ function saveStudentEdit() {
 }
 
 function importLocalStorageToServer() {
-    const savedStudents = localStorage.getItem('work_study_students');
-    const savedExceptions = localStorage.getItem('work_study_exceptions');
+    const savedStudents = localStorage.getItem(getStorageKey('work_study_students'));
+    const savedExceptions = localStorage.getItem(getStorageKey('work_study_exceptions'));
     
     if (!savedStudents) {
         alert('이 브라우저에 저장되어 있는 이전 시간표 데이터가 없습니다.');
