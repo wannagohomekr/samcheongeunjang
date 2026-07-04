@@ -3118,6 +3118,12 @@ function renderCalendar() {
         if (dayOfWeek === 0) cell.classList.add('Sunday');
         if (dayOfWeek === 6) cell.classList.add('Saturday');
 
+        // Check if date is a public holiday
+        const holidayName = getKoreanHoliday(dateStr);
+        if (holidayName) {
+            cell.classList.add('holiday');
+        }
+
         // Check exceptions
         const isCustomized = exceptions[dateStr] !== undefined;
         if (isCustomized) {
@@ -3125,12 +3131,37 @@ function renderCalendar() {
         }
 
         // Get schedules for this date
-        const dayShifts = getSchedulesForDate(dateStr);
+        const dayShifts = [...getSchedulesForDate(dateStr)];
+        
+        // Sort dayShifts: 적용안함 -> 일반자료실 -> 아동실
+        const assignmentOrder = {
+            '적용안함': 1,
+            '일반자료실': 2,
+            '아동실': 3
+        };
+        dayShifts.sort((a, b) => {
+            const orderA = assignmentOrder[a.assignment || '적용안함'] || 1;
+            const orderB = assignmentOrder[b.assignment || '적용안함'] || 1;
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            if (a.startHour !== b.startHour) {
+                return a.startHour - b.startHour;
+            }
+            return a.studentName.localeCompare(b.studentName);
+        });
 
         // Header for day number
         const dayNumElem = document.createElement('div');
         dayNumElem.className = 'day-number';
-        dayNumElem.innerHTML = `${d}${isCustomized ? ' <span style="color:var(--primary); font-size:0.6rem;">✏️</span>' : ''}`;
+        let dayNumHtml = `${d}`;
+        if (holidayName) {
+            dayNumHtml += ` <span class="holiday-label" style="color: var(--danger); font-size: 0.75rem; font-weight: bold; margin-left: 0.25rem;">${holidayName}</span>`;
+        }
+        if (isCustomized) {
+            dayNumHtml += ' <span style="color:var(--primary); font-size:0.6rem;">✏️</span>';
+        }
+        dayNumElem.innerHTML = dayNumHtml;
         cell.appendChild(dayNumElem);
 
         // List container for student pills
@@ -3145,10 +3176,12 @@ function renderCalendar() {
             pill.style.backgroundColor = color.bg;
             pill.style.color = color.text;
             pill.style.borderColor = color.border;
-            pill.title = `${shift.studentName} (${shift.startHour}-${shift.endHour}${shift.hasMeal ? ', 식사' : ''})`;
+            
+            const assignmentText = shift.assignment || '적용안함';
+            pill.title = `${shift.studentName} [${assignmentText}] (${shift.startHour}-${shift.endHour}${shift.hasMeal ? ', 식사' : ''})`;
             
             const mealChar = shift.hasMeal ? '🍽️' : '';
-            pill.innerHTML = `<span>${shift.studentName}</span> <span>${shift.startHour}-${shift.endHour}${mealChar}</span>`;
+            pill.innerHTML = `<span>${shift.studentName} [${assignmentText}]</span> <span>${shift.startHour}-${shift.endHour}${mealChar}</span>`;
             pillsList.appendChild(pill);
         });
 
@@ -3204,6 +3237,10 @@ function openDateModal(dateStr) {
     modalAddStart.value = 9;
     modalAddEnd.value = 18;
     modalAddMeal.checked = false;
+    const assignmentSelect = document.getElementById('modal-add-assignment');
+    if (assignmentSelect) {
+        assignmentSelect.value = '적용안함';
+    }
 
     renderModalTodayShifts();
     
@@ -3227,6 +3264,24 @@ function renderModalTodayShifts() {
         return;
     }
 
+    // Sort activeDateShifts: 적용안함 -> 일반자료실 -> 아동실
+    const assignmentOrder = {
+        '적용안함': 1,
+        '일반자료실': 2,
+        '아동실': 3
+    };
+    activeDateShifts.sort((a, b) => {
+        const orderA = assignmentOrder[a.assignment || '적용안함'] || 1;
+        const orderB = assignmentOrder[b.assignment || '적용안함'] || 1;
+        if (orderA !== orderB) {
+            return orderA - orderB;
+        }
+        if (a.startHour !== b.startHour) {
+            return a.startHour - b.startHour;
+        }
+        return a.studentName.localeCompare(b.studentName);
+    });
+
     activeDateShifts.forEach((shift, index) => {
         const item = document.createElement('div');
         item.className = 'modal-student-item';
@@ -3242,10 +3297,14 @@ function renderModalTodayShifts() {
                <button type="button" class="btn-remove-shift" onclick="removeShiftInModal(${index})">삭제</button>`
             : '';
 
+        const assignmentText = shift.assignment || '적용안함';
+        const assignmentColor = assignmentText === '아동실' ? '#f59e0b' : (assignmentText === '일반자료실' ? '#10b981' : '#6b7280');
+
         item.innerHTML = `
             <div class="student-details">
                 <span class="badge-type ${shift.type === '집중' ? 'intensive' : 'semester'}">${shift.type}</span>
                 <strong>${shift.studentName}</strong>
+                <span class="badge-assignment" style="background-color: ${assignmentColor}; color: white; padding: 0.15rem 0.35rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">${assignmentText}</span>
             </div>
             <div class="student-actions">
                 <span class="student-time">${shift.startHour}:00 ~ ${shift.endHour}:00${mealText}</span>
@@ -3267,6 +3326,15 @@ function removeShiftInModal(index) {
 
 function addShiftInModal() {
     if (!isAdmin) return;
+
+    // Check if it's a holiday and show warning popup
+    const holidayName = getKoreanHoliday(activeDate);
+    if (holidayName) {
+        if (!confirm(`⚠️ ${activeDate}는 ${holidayName} (공휴일) 입니다. 정말로 이 날짜에 근무 일정을 입력/수정하시겠습니까?`)) {
+            return;
+        }
+    }
+
     const studentName = modalAddStudentSelect.value;
     if (!studentName) {
         alert('근무를 지정할 학생을 선택하세요.');
@@ -3276,6 +3344,9 @@ function addShiftInModal() {
     const start = parseInt(modalAddStart.value, 10);
     const end = parseInt(modalAddEnd.value, 10);
     const meal = modalAddMeal.checked;
+    
+    const assignmentSelect = document.getElementById('modal-add-assignment');
+    const assignment = assignmentSelect ? assignmentSelect.value : '적용안함';
 
     if (start >= end) {
         alert('종료 시간이 시작 시간보다 커야 합니다.');
@@ -3305,7 +3376,8 @@ function addShiftInModal() {
             type: student.type,
             startHour: start,
             endHour: end,
-            hasMeal: meal
+            hasMeal: meal,
+            assignment: assignment
         };
     } else {
         // Add mode: Push new element
@@ -3314,7 +3386,8 @@ function addShiftInModal() {
             type: student.type,
             startHour: start,
             endHour: end,
-            hasMeal: meal
+            hasMeal: meal,
+            assignment: assignment
         });
     }
 
@@ -3332,6 +3405,15 @@ function saveModalChanges() {
 
 function revertModalToBase() {
     if (!isAdmin) return;
+
+    // Check if it's a holiday and show warning popup
+    const holidayName = getKoreanHoliday(activeDate);
+    if (holidayName) {
+        if (!confirm(`⚠️ ${activeDate}는 ${holidayName} (공휴일) 입니다. 정말로 기본 고정 일정으로 복원하시겠습니까?`)) {
+            return;
+        }
+    }
+
     if (confirm('이 일자의 일정을 요일별 기본 고정 일정으로 복원하시겠습니까?')) {
         const dateObj = new Date(activeDate);
         const weekdayChar = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
@@ -3375,6 +3457,11 @@ function startEditShiftInModal(index) {
     modalAddStart.value = shift.startHour;
     modalAddEnd.value = shift.endHour;
     modalAddMeal.checked = shift.hasMeal;
+    
+    const assignmentSelect = document.getElementById('modal-add-assignment');
+    if (assignmentSelect) {
+        assignmentSelect.value = shift.assignment || '적용안함';
+    }
 
     // Toggle labels
     const formTitle = document.getElementById('modal-form-title');
@@ -3408,6 +3495,10 @@ function cancelEditShiftInModal() {
     modalAddStart.value = 9;
     modalAddEnd.value = 18;
     modalAddMeal.checked = false;
+    const assignmentSelect = document.getElementById('modal-add-assignment');
+    if (assignmentSelect) {
+        assignmentSelect.value = '적용안함';
+    }
 
     // Toggle labels back
     const formTitle = document.getElementById('modal-form-title');
@@ -3758,11 +3849,22 @@ async function exportToExcel() {
                     
                     const dayIdx = w * 7 + d;
                     if (dayIdx >= firstDay && currentDay <= numDays) {
-                        cellDate.value = currentDay;
+                        const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+                        const holidayName = getKoreanHoliday(dateStr);
+                        
+                        if (holidayName) {
+                            cellDate.value = `${currentDay} (${holidayName})`;
+                        } else {
+                            cellDate.value = currentDay;
+                        }
+                        
                         cellDate.font = { name: '맑은 고딕', size: 9, bold: true };
                         
-                        if (d === 0) cellDate.font.color = { argb: 'FFFF0000' }; // Sunday
-                        if (d === 6) cellDate.font.color = { argb: 'FF0284C7' }; // Saturday
+                        if (d === 0 || holidayName) {
+                            cellDate.font.color = { argb: 'FFFF0000' }; // Sunday / Holiday is Red
+                        } else if (d === 6) {
+                            cellDate.font.color = { argb: 'FF0284C7' }; // Saturday is Blue
+                        }
                         
                         cellDate.alignment = { horizontal: 'left', vertical: 'middle' };
                         cellDate.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
@@ -3772,13 +3874,30 @@ async function exportToExcel() {
                             right: { style: 'thin', color: { argb: gridBorderColor } }
                         };
                         
-                        const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
-                        const daySchedules = getSchedulesForDate(dateStr);
+                        const daySchedules = [...getSchedulesForDate(dateStr)];
                         
                         if (daySchedules.length > 0) {
+                            const assignmentOrder = {
+                                '적용안함': 1,
+                                '일반자료실': 2,
+                                '아동실': 3
+                            };
+                            daySchedules.sort((a, b) => {
+                                const orderA = assignmentOrder[a.assignment || '적용안함'] || 1;
+                                const orderB = assignmentOrder[b.assignment || '적용안함'] || 1;
+                                if (orderA !== orderB) {
+                                    return orderA - orderB;
+                                }
+                                if (a.startHour !== b.startHour) {
+                                    return a.startHour - b.startHour;
+                                }
+                                return a.studentName.localeCompare(b.studentName);
+                            });
+
                             const studentLines = daySchedules.map(s => {
                                 const mealStr = s.hasMeal ? '(식)' : '';
-                                return `${s.studentName}${mealStr} ${s.startHour}-${s.endHour}`;
+                                const assignmentText = s.assignment || '적용안함';
+                                return `${s.studentName} [${assignmentText}]${mealStr} ${s.startHour}-${s.endHour}`;
                             });
                             cellStudents.value = studentLines.join('\n');
                             cellStudents.font = { name: '맑은 고딕', size: 8, color: { argb: 'FF1E293B' } };
@@ -4031,7 +4150,8 @@ async function exportToExcel() {
             { header: '시작시간', key: 'start', width: 10 },
             { header: '종료시간', key: 'end', width: 10 },
             { header: '식사감면(1h)', key: 'meal', width: 15 },
-            { header: '실근무시간', key: 'actual', width: 15 }
+            { header: '실근무시간', key: 'actual', width: 15 },
+            { header: '근무 배정', key: 'assignment', width: 15 }
         ];
 
         ws2.getRow(1).height = 25;
@@ -4051,7 +4171,8 @@ async function exportToExcel() {
                         start: '-',
                         end: '-',
                         meal: '-',
-                        actual: '변동성'
+                        actual: '변동성',
+                        assignment: '-'
                     });
                 } else {
                     student.schedules.forEach(sched => {
@@ -4064,7 +4185,8 @@ async function exportToExcel() {
                                 start: `${sched.startHour}:00`,
                                 end: `${sched.endHour}:00`,
                                 meal: sched.hasMeal ? '적용(1h 차감)' : '미적용',
-                                actual: `${actualHours}시간`
+                                actual: `${actualHours}시간`,
+                                assignment: '-'
                             });
                         });
                     });
@@ -4074,7 +4196,25 @@ async function exportToExcel() {
             const numDays = new Date(selectedYear, selectedMonth, 0).getDate();
             for (let d = 1; d <= numDays; d++) {
                 const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayShifts = getSchedulesForDate(dateStr);
+                const dayShifts = [...getSchedulesForDate(dateStr)];
+                
+                // Sort dayShifts: 적용안함 -> 일반자료실 -> 아동실
+                const assignmentOrder = {
+                    '적용안함': 1,
+                    '일반자료실': 2,
+                    '아동실': 3
+                };
+                dayShifts.sort((a, b) => {
+                    const orderA = assignmentOrder[a.assignment || '적용안함'] || 1;
+                    const orderB = assignmentOrder[b.assignment || '적용안함'] || 1;
+                    if (orderA !== orderB) {
+                        return orderA - orderB;
+                    }
+                    if (a.startHour !== b.startHour) {
+                        return a.startHour - b.startHour;
+                    }
+                    return a.studentName.localeCompare(b.studentName);
+                });
                 
                 dayShifts.forEach(shift => {
                     const actualHours = Math.max(0, shift.endHour - shift.startHour - (shift.hasMeal ? 1 : 0));
@@ -4085,7 +4225,8 @@ async function exportToExcel() {
                         start: `${shift.startHour}:00`,
                         end: `${shift.endHour}:00`,
                         meal: shift.hasMeal ? '적용(1h 차감)' : '미적용',
-                        actual: `${actualHours}시간`
+                        actual: `${actualHours}시간`,
+                        assignment: shift.assignment || '적용안함'
                     });
                 });
             }
@@ -4836,6 +4977,7 @@ async function handleExcelImport(event) {
                         if (!importedExceptions[dateStr]) {
                             importedExceptions[dateStr] = [];
                         }
+                        const assignmentVal = row.getCell(8).value; // 근무 배정
                         // Check duplicate in exception list
                         const dup = importedExceptions[dateStr].some(s => s.studentName === nameVal && s.startHour === startHour && s.endHour === endHour);
                         if (!dup) {
@@ -4844,7 +4986,8 @@ async function handleExcelImport(event) {
                                 type: type,
                                 startHour: startHour,
                                 endHour: endHour,
-                                hasMeal: hasMeal
+                                hasMeal: hasMeal,
+                                assignment: assignmentVal ? assignmentVal.toString().trim() : '적용안함'
                             });
                         }
                     }
@@ -4893,6 +5036,14 @@ function applyWeeklySchedulesToMonth() {
         
         for (let d = 1; d <= numDays; d++) {
             const dateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            // Do not apply weekly schedules to public holidays
+            const holidayName = getKoreanHoliday(dateStr);
+            if (holidayName) {
+                exceptions[dateStr] = [];
+                continue;
+            }
+            
             const dateObj = new Date(selectedYear, selectedMonth - 1, d);
             const weekdayChar = ['일', '월', '화', '수', '목', '금', '토'][dateObj.getDay()];
             
@@ -5486,6 +5637,158 @@ function syncSettingsInputs() {
     if (inputSemester) inputSemester.value = settings.maxWeeklySemester;
     if (inputMonthly) inputMonthly.value = settings.maxMonthlyLimit;
     if (formMonthly && !formMonthly.value) formMonthly.value = settings.maxMonthlyLimit;
+}
+
+// ==========================================
+// NEW: KOREAN HOLIDAY DATABASE AND QUERY ENGINE
+// ==========================================
+const KOREAN_HOLIDAYS = {
+    // 2024
+    "2024-01-01": "신정",
+    "2024-02-09": "설날 연휴",
+    "2024-02-10": "설날",
+    "2024-02-11": "설날 연휴",
+    "2024-02-12": "대체공휴일(설날)",
+    "2024-03-01": "삼일절",
+    "2024-04-10": "국회의원선거",
+    "2024-05-05": "어린이날",
+    "2024-05-06": "대체공휴일(어린이날)",
+    "2024-05-15": "부처님오신날",
+    "2024-06-06": "현충일",
+    "2024-08-15": "광복절",
+    "2024-09-16": "추석 연휴",
+    "2024-09-17": "추석",
+    "2024-09-18": "추석 연휴",
+    "2024-10-03": "개천절",
+    "2024-10-09": "한글날",
+    "2024-12-25": "성탄절",
+
+    // 2025
+    "2025-01-01": "신정",
+    "2025-01-28": "설날 연휴",
+    "2025-01-29": "설날",
+    "2025-01-30": "설날 연휴",
+    "2025-03-01": "삼일절",
+    "2025-03-03": "대체공휴일(삼일절)",
+    "2025-05-05": "어린이날 / 부처님오신날",
+    "2025-05-06": "대체공휴일",
+    "2025-06-06": "현충일",
+    "2025-08-15": "광복절",
+    "2025-10-03": "개천절",
+    "2025-10-05": "추석 연휴",
+    "2025-10-06": "추석",
+    "2025-10-07": "추석 연휴",
+    "2025-10-08": "대체공휴일(추석)",
+    "2025-10-09": "한글날",
+    "2025-12-25": "성탄절",
+
+    // 2026
+    "2026-01-01": "신정",
+    "2026-02-16": "설날 연휴",
+    "2026-02-17": "설날",
+    "2026-02-18": "설날 연휴",
+    "2026-03-01": "삼일절",
+    "2026-03-02": "대체공휴일(삼일절)",
+    "2026-05-05": "어린이날",
+    "2026-05-24": "부처님오신날",
+    "2026-05-25": "대체공휴일(부처님오신날)",
+    "2026-06-03": "지방선거",
+    "2026-06-06": "현충일",
+    "2026-08-15": "광복절",
+    "2026-08-17": "대체공휴일(광복절)",
+    "2026-09-24": "추석 연휴",
+    "2026-09-25": "추석",
+    "2026-09-26": "추석 연휴",
+    "2026-10-03": "개천절",
+    "2026-10-05": "대체공휴일(개천절)",
+    "2026-10-09": "한글날",
+    "2026-12-25": "성탄절",
+
+    // 2027
+    "2027-01-01": "신정",
+    "2027-02-06": "설날 연휴",
+    "2027-02-07": "설날",
+    "2027-02-08": "설날 연휴",
+    "2027-02-09": "대체공휴일(설날)",
+    "2027-03-01": "삼일절",
+    "2027-05-05": "어린이날",
+    "2027-05-13": "부처님오신날",
+    "2027-06-06": "현충일",
+    "2027-08-15": "광복절",
+    "2027-08-16": "대체공휴일(광복절)",
+    "2027-09-14": "추석 연휴",
+    "2027-09-15": "추석",
+    "2027-09-16": "추석 연휴",
+    "2027-10-03": "개천절",
+    "2027-10-04": "대체공휴일(개천절)",
+    "2027-10-09": "한글날",
+    "2027-10-11": "대체공휴일(한글날)",
+    "2027-12-25": "성탄절",
+    "2027-12-27": "대체공휴일(성탄절)",
+
+    // 2028
+    "2028-01-01": "신정",
+    "2028-01-26": "설날 연휴",
+    "2028-01-27": "설날",
+    "2028-01-28": "설날 연휴",
+    "2028-03-01": "삼일절",
+    "2028-04-12": "국회의원선거",
+    "2028-05-02": "부처님오신날",
+    "2028-05-05": "어린이날",
+    "2028-06-06": "현충일",
+    "2028-08-15": "광복절",
+    "2028-10-02": "추석 연휴",
+    "2028-10-03": "추석 / 개천절",
+    "2028-10-04": "추석 연휴",
+    "2028-10-05": "대체공휴일(추석/개천절)",
+    "2028-10-09": "한글날",
+    "2028-12-25": "성탄절",
+
+    // 2029
+    "2029-01-01": "신정",
+    "2029-02-12": "설날 연휴",
+    "2029-02-13": "설날",
+    "2029-02-14": "설날 연휴",
+    "2029-03-01": "삼일절",
+    "2029-05-05": "어린이날",
+    "2029-05-07": "대체공휴일(어린이날)",
+    "2029-05-20": "부처님오신날",
+    "2029-05-21": "대체공휴일(부처님오신날)",
+    "2029-06-06": "현충일",
+    "2029-08-15": "광복절",
+    "2029-09-21": "추석 연휴",
+    "2029-09-22": "추석",
+    "2029-09-23": "추석 연휴",
+    "2029-09-24": "대체공휴일(추석)",
+    "2029-10-03": "개천절",
+    "2029-10-09": "한글날",
+    "2029-12-25": "성탄절"
+};
+
+function getKoreanHoliday(dateStr) {
+    if (KOREAN_HOLIDAYS[dateStr]) {
+        return KOREAN_HOLIDAYS[dateStr];
+    }
+    
+    // Basic fallback for other years (solar holidays only)
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+        const mmdd = `${parts[1]}-${parts[2]}`;
+        const solarHolidays = {
+            "01-01": "신정",
+            "03-01": "삼일절",
+            "05-05": "어린이날",
+            "06-06": "현충일",
+            "08-15": "광복절",
+            "10-03": "개천절",
+            "10-09": "한글날",
+            "12-25": "성탄절"
+        };
+        if (solarHolidays[mmdd]) {
+            return solarHolidays[mmdd];
+        }
+    }
+    return null;
 }
 
 
